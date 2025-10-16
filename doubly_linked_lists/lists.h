@@ -1,8 +1,8 @@
 #ifndef LISTS_H
 #define LISTS_H
 
+#include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
 
 /**
  * struct dlistint_s - doubly linked list
@@ -19,14 +19,9 @@ typedef struct dlistint_s
 	struct dlistint_s *next;
 } dlistint_t;
 
-/* prototypes */
 size_t print_dlistint(const dlistint_t *h);
 size_t dlistint_len(const dlistint_t *h);
-/**
- * _putchar - writes a character to stdout
- * @c: character to print
- * Return: 1 on success, -1 on error
- */
-int _putchar(char c);
+dlistint_t *add_dnodeint(dlistint_t **head, const int n);
 
 #endif /* LISTS_H */
+
