@@ -6,28 +6,30 @@
 #define BUF_SIZE 1024
 
 /**
- * print_read_error - print read error message to STDERR.
- * @name: file name that couldn't be read
+ * print_read_error - print read error and exit 98
+ * @file: file name
  */
-static void print_read_error(const char *name)
+void print_read_error(const char *file)
 {
-	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", name);
+	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", file);
+	exit(98);
 }
 
 /**
- * print_write_error - print write/creation error message to STDERR.
- * @name: file name that couldn't be written/created
+ * print_write_error - print write error and exit 99
+ * @file: file name
  */
-static void print_write_error(const char *name)
+void print_write_error(const char *file)
 {
-	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", name);
+	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", file);
+	exit(99);
 }
 
 /**
- * safe_close - close a file descriptor, exit(100) if it fails.
- * @fd: file descriptor to close
+ * close_fd - close fd or exit 100 on failure
+ * @fd: file descriptor
  */
-static void safe_close(int fd)
+void close_fd(int fd)
 {
 	if (close(fd) == -1)
 	{
@@ -37,11 +39,10 @@ static void safe_close(int fd)
 }
 
 /**
- * main - copy the content of a file to another file.
- * @ac: argument count
- * @av: argument vector
- *
- * Return: 0 on success, exits with specific codes on errors.
+ * main - copy the content of a file to another
+ * @ac: arg count
+ * @av: arg vector
+ * Return: 0 on success
  */
 int main(int ac, char **av)
 {
@@ -57,40 +58,27 @@ int main(int ac, char **av)
 
 	fd_from = open(av[1], O_RDONLY);
 	if (fd_from == -1)
-	{
 		print_read_error(av[1]);
-		exit(98);
-	}
 
 	fd_to = open(av[2], O_CREAT | O_WRONLY | O_TRUNC, 0664);
 	if (fd_to == -1)
-	{
 		print_write_error(av[2]);
-		safe_close(fd_from);
-		exit(99);
-	}
 
-	while ((r = read(fd_from, buf, BUF_SIZE)) > 0)
+	while (1)
 	{
+		r = read(fd_from, buf, BUF_SIZE);
+		if (r == -1)
+			print_read_error(av[1]);
+		if (r == 0)
+			break;
+
 		w = write(fd_to, buf, r);
 		if (w == -1 || w != r)
-		{
 			print_write_error(av[2]);
-			safe_close(fd_from);
-			safe_close(fd_to);
-			exit(99);
-		}
-	}
-	if (r == -1)
-	{
-		print_read_error(av[1]);
-		safe_close(fd_from);
-		safe_close(fd_to);
-		exit(98);
 	}
 
-	safe_close(fd_from);
-	safe_close(fd_to);
+	close_fd(fd_from);
+	close_fd(fd_to);
 	return (0);
 }
 
