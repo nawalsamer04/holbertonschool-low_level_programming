@@ -1,8 +1,33 @@
-#include "main.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-#define BUFSIZE 1024
+#define BUF_SIZE 1024
 
-static void close_fd(int fd)
+/**
+ * print_read_error - print read error message to STDERR.
+ * @name: file name that couldn't be read
+ */
+static void print_read_error(const char *name)
+{
+	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", name);
+}
+
+/**
+ * print_write_error - print write/creation error message to STDERR.
+ * @name: file name that couldn't be written/created
+ */
+static void print_write_error(const char *name)
+{
+	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", name);
+}
+
+/**
+ * safe_close - close a file descriptor, exit(100) if it fails.
+ * @fd: file descriptor to close
+ */
+static void safe_close(int fd)
 {
 	if (close(fd) == -1)
 	{
@@ -12,16 +37,17 @@ static void close_fd(int fd)
 }
 
 /**
- * main - cp file_from file_to
+ * main - copy the content of a file to another file.
  * @ac: argument count
  * @av: argument vector
- * Return: 0 on success; exits with 97/98/99/100 on error
+ *
+ * Return: 0 on success, exits with specific codes on errors.
  */
 int main(int ac, char **av)
 {
 	int fd_from, fd_to;
 	ssize_t r, w;
-	char buf[BUFSIZE];
+	char buf[BUF_SIZE];
 
 	if (ac != 3)
 	{
@@ -32,45 +58,39 @@ int main(int ac, char **av)
 	fd_from = open(av[1], O_RDONLY);
 	if (fd_from == -1)
 	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", av[1]);
+		print_read_error(av[1]);
 		exit(98);
 	}
 
 	fd_to = open(av[2], O_CREAT | O_WRONLY | O_TRUNC, 0664);
 	if (fd_to == -1)
 	{
-		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", av[2]);
-		close_fd(fd_from);
+		print_write_error(av[2]);
+		safe_close(fd_from);
 		exit(99);
 	}
 
-	while ((r = read(fd_from, buf, BUFSIZE)) != 0)
+	while ((r = read(fd_from, buf, BUF_SIZE)) > 0)
 	{
-		if (r == -1)
+		w = write(fd_to, buf, r);
+		if (w == -1 || w != r)
 		{
-			dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", av[1]);
-			close_fd(fd_from);
-			close_fd(fd_to);
-			exit(98);
-		}
-
-		ssize_t total = 0;
-		while (total < r)
-		{
-			w = write(fd_to, buf + total, r - total);
-			if (w == -1)
-			{
-				dprintf(STDERR_FILENO, "Error: Can't write to %s\n", av[2]);
-				close_fd(fd_from);
-				close_fd(fd_to);
-				exit(99);
-			}
-			total += w;
+			print_write_error(av[2]);
+			safe_close(fd_from);
+			safe_close(fd_to);
+			exit(99);
 		}
 	}
+	if (r == -1)
+	{
+		print_read_error(av[1]);
+		safe_close(fd_from);
+		safe_close(fd_to);
+		exit(98);
+	}
 
-	close_fd(fd_from);
-	close_fd(fd_to);
+	safe_close(fd_from);
+	safe_close(fd_to);
 	return (0);
 }
 
