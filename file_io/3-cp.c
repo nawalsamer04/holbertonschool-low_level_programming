@@ -4,30 +4,27 @@
 #include <unistd.h>
 
 #define BUF_SIZE 1024
-
 /**
- * print_read_error - print read error and exit 98
- * @file: file name
+ * print_read_error - prints read error message and exits
+ * @file: name of the file that can't be read
  */
 void print_read_error(const char *file)
 {
 	dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", file);
 	exit(98);
 }
-
 /**
- * print_write_error - print write error and exit 99
- * @file: file name
+ * print_write_error - prints write error message and exits
+ * @file: name of the file that can't be written
  */
 void print_write_error(const char *file)
 {
 	dprintf(STDERR_FILENO, "Error: Can't write to %s\n", file);
 	exit(99);
 }
-
 /**
- * close_fd - close fd or exit 100 on failure
- * @fd: file descriptor
+ * close_fd - closes a file descriptor
+ * @fd: the file descriptor to close
  */
 void close_fd(int fd)
 {
@@ -37,11 +34,11 @@ void close_fd(int fd)
 		exit(100);
 	}
 }
-
 /**
- * main - copy the content of a file to another
- * @ac: arg count
- * @av: arg vector
+ * main - copies the contents of one file to another
+ * @ac: argument count
+ * @av: argument vector
+ *
  * Return: 0 on success
  */
 int main(int ac, char **av)
@@ -64,18 +61,15 @@ int main(int ac, char **av)
 	if (fd_to == -1)
 		print_write_error(av[2]);
 
-	while (1)
+	while ((r = read(fd_from, buf, BUF_SIZE)) > 0)
 	{
-		r = read(fd_from, buf, BUF_SIZE);
-		if (r == -1)
-			print_read_error(av[1]);
-		if (r == 0)
-			break;
-
 		w = write(fd_to, buf, r);
 		if (w == -1 || w != r)
 			print_write_error(av[2]);
 	}
+
+	if (r == -1)
+		print_read_error(av[1]);
 
 	close_fd(fd_from);
 	close_fd(fd_to);
