@@ -1,37 +1,35 @@
 #include <stdlib.h>
-#include <limits.h>
 #include "main.h"
 
 /**
- * _calloc - allocates zero-initialized memory for an array
+ * _calloc - allocates memory for an array using malloc
  * @nmemb: number of elements
- * @size:  size of each element in bytes
+ * @size: size of each element
  *
- * Return: pointer to allocated zeroed memory,
- *         or NULL if nmemb or size is 0, on overflow, or on malloc failure
+ * Return: pointer to allocated memory set to 0,
+ *         or NULL if nmemb or size is 0 or if malloc fails
  */
 void *_calloc(unsigned int nmemb, unsigned int size)
 {
-	size_t bytes, i;
-	unsigned char *p;
+	unsigned int i, total;
+	char *p;
 
-	/* invalid sizes */
 	if (nmemb == 0 || size == 0)
 		return (NULL);
 
-	/* overflow check: nmemb * size must not wrap */
-	if (nmemb > SIZE_MAX / size)
+	/* avoid integer overflow */
+	if (nmemb > (unsigned int)(-1) / size)
 		return (NULL);
 
-	bytes = (size_t)nmemb * (size_t)size;
+	total = nmemb * size;
 
-	p = malloc(bytes);
+	p = malloc(total);
 	if (p == NULL)
 		return (NULL);
 
-	/* manual zeroing to stay portable under C89 */
-	for (i = 0; i < bytes; i++)
+	for (i = 0; i < total; i++)
 		p[i] = 0;
 
-	return ((void *)p);
+	return (p);
 }
+
