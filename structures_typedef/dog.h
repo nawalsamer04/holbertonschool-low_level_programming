@@ -7,7 +7,7 @@
  * @age: dog's age
  * @owner: dog's owner
  *
- * Description: defines a structure representing a dog.
+ * Description: defines a dog structure
  */
 struct dog
 {
@@ -15,8 +15,13 @@ struct dog
 	float age;
 	char *owner;
 };
-/* Function prototype for init_dog */
-void print_dog(struct dog *d);
+
+/* New type definition for struct dog */
+typedef struct dog dog_t;
+
+/* Function prototypes */
 void init_dog(struct dog *d, char *name, float age, char *owner);
+void print_dog(struct dog *d);
+
 #endif /* DOG_H */
 
