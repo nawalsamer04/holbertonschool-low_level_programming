@@ -1,62 +1,68 @@
-#include <stdlib.h>
-#include <string.h>
 #include "hash_tables.h"
 
+/* small internal strdup to avoid portability issues */
+static char *dupstr(const char *s)
+{
+	size_t len;
+	char *p;
+
+	if (!s)
+		return (NULL);
+	len = strlen(s) + 1;
+	p = malloc(len);
+	if (!p)
+		return (NULL);
+	memcpy(p, s, len);
+	return (p);
+}
+
 /**
- * hash_table_set - Add/update an element in a hash table
- * @ht: pointer to the hash table
- * @key: key (cannot be empty string)
- * @value: value to store (dup'ed; can be empty string)
+ * hash_table_set - add/update a key/value in the hash table
+ * @ht:   hash table
+ * @key:  key (non-empty)
+ * @value:value (duplicated; can be empty string but not NULL)
  *
  * Return: 1 on success, 0 on error
  */
 int hash_table_set(hash_table_t *ht, const char *key, const char *value)
 {
 	unsigned long int idx;
-	hash_node_t *node, *new_node;
-	char *vdup;
+	hash_node_t *node, *head;
 
-	if (ht == NULL || key == NULL || *key == '\0' || value == NULL)
+	if (!ht || !ht->array || !key || *key == '\0' || !value)
 		return (0);
 
 	idx = key_index((const unsigned char *)key, ht->size);
-
-	/* Update existing key */
+	/* update if key already exists */
 	for (node = ht->array[idx]; node; node = node->next)
 	{
 		if (strcmp(node->key, key) == 0)
 		{
-			vdup = strdup(value);
-			if (vdup == NULL)
+			char *nv = dupstr(value);
+
+			if (!nv)
 				return (0);
 			free(node->value);
-			node->value = vdup;
+			node->value = nv;
 			return (1);
 		}
 	}
 
-	/* Insert new node at beginning (chaining) */
-	new_node = malloc(sizeof(*new_node));
-	if (new_node == NULL)
+	/* insert at beginning (collision handling by chaining) */
+	node = malloc(sizeof(*node));
+	if (!node)
 		return (0);
-
-	new_node->key = strdup(key);
-	if (new_node->key == NULL)
+	node->key = dupstr(key);
+	node->value = dupstr(value);
+	if (!node->key || !node->value)
 	{
-		free(new_node);
+		free(node->key);
+		free(node->value);
+		free(node);
 		return (0);
 	}
-
-	new_node->value = strdup(value);
-	if (new_node->value == NULL)
-	{
-		free(new_node->key);
-		free(new_node);
-		return (0);
-	}
-
-	new_node->next = ht->array[idx];
-	ht->array[idx] = new_node;
-
+	head = ht->array[idx];
+	node->next = head;
+	ht->array[idx] = node;
 	return (1);
 }
