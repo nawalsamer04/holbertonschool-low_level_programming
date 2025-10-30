@@ -17,13 +17,14 @@ static char *dupstr(const char *s)
 }
 
 /**
- * hash_table_set - add/update a key/value in the hash table
- * @ht:   hash table
- * @key:  key (non-empty)
- * @value:value (duplicated; can be empty string but not NULL)
+ * hash_table_set - Add or update a key/value in a hash table
+ * @ht: pointer to the hash table
+ * @key: key string (must be non-NULL and non-empty)
+ * @value: value string to set (duplicated internally)
  *
- * Return: 1 on success, 0 on error
+ * Return: 1 on success, 0 on failure
  */
+
 int hash_table_set(hash_table_t *ht, const char *key, const char *value)
 {
 	unsigned long int idx;
